@@ -1,9 +1,12 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:whatsapp_clone/common/utils/utils.dart';
 import 'package:whatsapp_clone/features/auth/screens/otp_screen.dart';
+import 'package:whatsapp_clone/features/auth/screens/user_information_screen.dart';
 
 final authRepositoryProvider = Provider((ref) => AuthRepository(
       auth: FirebaseAuth.instance,
@@ -19,6 +22,7 @@ class AuthRepository {
     required this.firestore,
   });
 
+  // function to signin user with phonenumber
   void signInWithPhoneNumber(BuildContext context, String phoneNumber) async {
     try {
       await auth.verifyPhoneNumber(
@@ -35,7 +39,25 @@ class AuthRepository {
           }),
           codeAutoRetrievalTimeout: (String verificationId) {});
     } on FirebaseAuthException catch (e) {
-      // ignore: use_build_context_synchronously
+      showSnackBar(context: context, content: e.message!);
+    }
+  }
+
+  //function to verify OTP
+  void verifyOTP({
+    required BuildContext context,
+    required String verificationId,
+    required String userOTP,
+  }) async {
+    try {
+      PhoneAuthCredential credential = PhoneAuthProvider.credential(
+        verificationId: verificationId,
+        smsCode: userOTP,
+      );
+      await auth.signInWithCredential(credential);
+      Navigator.pushNamedAndRemoveUntil(
+          context, UserInformationScreen.routeName, (route) => false);
+    } on FirebaseAuthException catch (e) {
       showSnackBar(context: context, content: e.message!);
     }
   }
